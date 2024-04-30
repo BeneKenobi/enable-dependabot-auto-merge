@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "enable-depandabot-auto-commit"
-version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
+name = "Enable Dependabot Auto-Merge"
+version = "0.1.1"
+description = "This Python script automates several GitHub repository management tasks, including cloning a repository, setting up a workflow for Dependabot auto-merges."
+authors = ["BeneKenobi <1708125+BeneKenobi@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "enable_depandabot_auto_commit"}]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"

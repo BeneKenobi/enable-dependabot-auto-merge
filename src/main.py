@@ -37,9 +37,14 @@ def create_folder_structure(local_path: str) -> None:
     os.makedirs(os.path.join(local_path, ".github", "workflows"), exist_ok=True)
 
 
-def read_yaml_file(yaml_path: str) -> Any:
-    with open(yaml_path, "r") as f:
-        return yaml.safe_load(f)
+def is_yaml_content_same(existing_file: str, new_file: str) -> bool:
+    if not os.path.exists(existing_file):
+        return False
+    with open(existing_file, 'r') as file:
+        existing_content = yaml.safe_load(file)
+    with open(new_file, 'r') as file:
+        new_content = yaml.safe_load(file)
+    return existing_content == new_content
 
 
 def add_yaml_file(local_path: str, yaml_content: Any) -> None:
@@ -116,6 +121,10 @@ if __name__ == "__main__":
         dest_yaml_path = os.path.join(
             local_path, ".github", "workflows", "dependabot-auto-merge.yml"
         )
+        if is_yaml_content_same(dest_yaml_path, yaml_file_path):
+            print("Auto-merge is already enabled. Exiting...")
+            delete_local_repo(local_path)
+            exit(0)
         shutil.copy(yaml_file_path, dest_yaml_path)
         commit_and_push(local_path, commit_user, commit_email)
         issue_number = create_pull_request(github_token, github_api_url, user)

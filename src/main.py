@@ -61,11 +61,30 @@ def commit_and_push(local_path: str, user: str, email: str) -> None:
     repo.config_writer().set_value("user", "email", email).release()
     repo.git.checkout("-b", "enable-dependabot-auto-merge")
     repo.git.add(all=True)
-    repo.git.commit("-m", "enable dependabot auto-merge")
+    repo.git.commit("-m", "build: enable dependabot auto-merge")
     repo.git.push("--set-upstream", "origin", "enable-dependabot-auto-merge")
 
 
-def create_pull_request(token: str, repo_url: str, user: str) -> None:
+def set_github_actions_permissions(token: str, api_url: str, user: str) -> None:
+    url = f"{api_url}/actions/permissions/workflow"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+    data = {
+        "default_workflow_permissions": "write",
+        "can_approve_pull_request_reviews": True
+    }
+
+    response = requests.put(url, headers=headers, json=data)
+    if response.status_code == 204:
+        print("Successfully updated GitHub Actions permissions.")
+    else:
+        print(f"Failed to update GitHub Actions permissions: {response.status_code} - {response.text}")
+
+
+def create_pull_request(token: str, api_url: str, user: str) -> None:
     headers = {"Authorization": f"token {token}"}
     data = {
         "title": "enable dependabot auto-merge",
@@ -73,7 +92,7 @@ def create_pull_request(token: str, repo_url: str, user: str) -> None:
         "base": "main",  # or whichever is your default branch
         "assignees": [user],
     }
-    response = requests.post(f"{repo_url}/pulls", headers=headers, json=data)
+    response = requests.post(f"{api_url}/pulls", headers=headers, json=data)
     response_json = response.json()
     if response.status_code != 201:
         print(f"Failed to create pull request: {response_json.get('message')}")
@@ -114,6 +133,7 @@ if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as temp_dir:
         local_path = temp_dir
         clone_repo(repo_url, local_path)
+        set_github_actions_permissions(github_token, github_api_url, user)
         create_folder_structure(local_path)
         yaml_file_path = os.path.join(
             os.path.realpath(os.path.dirname(__file__)), "dependabot-auto-merge.yml"
